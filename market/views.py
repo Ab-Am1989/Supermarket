@@ -46,13 +46,13 @@ def product_list(request):
         products_all = Product.objects.filter(name__contains=request.GET.get('search'))
     products = []
     for product in products_all:
-           product_details = {
+        product_details = {
             'id': product.id,
             'code': product.code,
             'name': product.name,
             'price': product.price,
             'inventory': product.inventory,
-        }
+            }
         products.append(product_details)
     data = {
         'products': products

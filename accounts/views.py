@@ -64,3 +64,35 @@ def customer_list(request):
         response = JsonResponse(dict(message='You must send request only with GET method!'))
         response.status_code = 400
         return response
+
+
+def customer_details(request, customer_id):
+    try:
+        if request.method == 'POST':
+            raise ValueError('Request method is improper!')
+        else:
+            customer = Customer.objects.get(pk=customer_id)
+            data = {
+                'id': customer.id,
+                'username': customer.user.username,
+                'first_name': customer.user.first_name,
+                'last_name': customer.user.last_name,
+                'email': customer.user.email,
+                'phone': customer.phone,
+                'address': customer.address,
+                'balance': customer.balance,
+            }
+            response = JsonResponse(data)
+            response.status_code = 200
+            return response
+
+    except Customer.DoesNotExist:
+        response = JsonResponse(dict(message='Customer Not Found.'))
+        response.status_code = 404
+        return response
+    except ValueError as e:
+        response = JsonResponse(dict(message=str(e)))
+        response.status_code = 400
+        return response
+
+
