@@ -61,4 +61,6 @@ def customer_list(request):
         data = dict(customers=customers)
         return JsonResponse(data)
     else:
-        return JsonResponse(dict(message='You must send request only with GET method!'))
+        response = JsonResponse(dict(message='You must send request only with GET method!'))
+        response.status_code = 400
+        return response
