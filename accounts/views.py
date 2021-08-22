@@ -96,3 +96,5 @@ def customer_details(request, customer_id):
         return response
 
 
+def customer_edit(request, customer_id):
+    pass
