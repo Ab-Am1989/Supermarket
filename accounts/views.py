@@ -97,4 +97,45 @@ def customer_details(request, customer_id):
 
 
 def customer_edit(request, customer_id):
-    pass
+    try:
+        if not (request.method == 'POST'):
+            raise AssertionError('Request method is improper!')
+        else:
+            customer = Customer.objects.get(pk=customer_id)
+            if request.POST.get('id') or request.POST.get('username') or request.POST.get('password'):
+                raise AssertionError('Cannot edit customer\'s identity and credentials.')
+            if request.POST.get('first_name'):
+                customer.user.first_name = request.POST.get('first_name')
+            if request.POST.get('last_name'):
+                customer.user.last_name = request.POST.get('last_name')
+            if request.POST.get('email'):
+                customer.user.email = request.POST.get('email')
+            if request.POST.get('phone'):
+                customer.phone = request.POST.get('phone')
+            if request.POST.get('address'):
+                customer.address = request.POST.get('address')
+            if request.POST.get('balance'):
+                customer.balance = int(request.POST.get('balance'))
+            data = {
+                "id": customer.id,
+                "username": customer.user.username,
+                "first_name": customer.user.first_name,
+                "last_name": customer.user.last_name,
+                "email": customer.user.email,
+                "phone": customer.phone,
+                "address": customer.address,
+                "balance": customer.balance,
+            }
+            customer.user.save()
+            customer.save()
+            response = JsonResponse(data)
+            response.status_code = 200
+            return response
+    except AssertionError as e:
+        response = JsonResponse(dict(message=str(e)))
+        response.status_code = 403
+        return response
+    except ValueError:
+        response = JsonResponse(dict(message='Balance should be integer'))
+        response.status_code = 400
+        return response
