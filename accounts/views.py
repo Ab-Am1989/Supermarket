@@ -5,7 +5,7 @@ from market.models import Customer
 from django.db.utils import IntegrityError
 from django.utils.datastructures import MultiValueDictKeyError
 from django.db.models import Q
-
+from django.contrib.auth import authenticate, login, logout
 
 # Create your views here.
 def register_customer(request):
@@ -139,3 +139,19 @@ def customer_edit(request, customer_id):
         response = JsonResponse(dict(message='Balance should be integer'))
         response.status_code = 400
         return response
+
+
+def login_view(request):
+    if request.method == 'POST':
+        username = request.POST['username']
+        password = request.POST['password']
+        user = authenticate(request, username=username, password=password)
+        if user is not None:
+            login(request, user)
+            return JsonResponse(dict(message='You are logged in successfully.'))
+        else:
+            response: JsonResponse = JsonResponse(dict(message='Username or Password is incorrect.'))
+            response.status_code = 404
+            return response
+    else:
+        return JsonResponse(dict(message='You didn\'t use proper method please try again!'))
