@@ -155,3 +155,6 @@ def login_view(request):
             return response
     else:
         return JsonResponse(dict(message='You didn\'t use proper method please try again!'))
+
+def logout_view(request):
+    pass
