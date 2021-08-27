@@ -7,6 +7,7 @@ from django.utils.datastructures import MultiValueDictKeyError
 from django.db.models import Q
 from django.contrib.auth import authenticate, login, logout
 
+
 # Create your views here.
 def register_customer(request):
     try:
@@ -156,5 +157,19 @@ def login_view(request):
     else:
         return JsonResponse(dict(message='You didn\'t use proper method please try again!'))
 
+
 def logout_view(request):
-    pass
+    if request.method == 'POST':
+        if request.user.is_authenticated:
+            logout(request)
+            response = JsonResponse(dict(message='You are logged out successfully.'))
+            response.status_code = 200
+            return response
+        else:
+            response = JsonResponse(dict(message='You are not logged in.'))
+            response.status_code = 403
+            return response
+    else:
+        response = JsonResponse(dict(message='You didn\'t use proper method please try again!'))
+        response.status_code = 400
+        return response
