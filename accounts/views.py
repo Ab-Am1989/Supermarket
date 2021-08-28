@@ -1,11 +1,14 @@
 from django.shortcuts import render
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponseRedirect
 from django.contrib.auth.models import User
+from django.urls import reverse
+
 from market.models import Customer
 from django.db.utils import IntegrityError
 from django.utils.datastructures import MultiValueDictKeyError
 from django.db.models import Q
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
 
 
 # Create your views here.
@@ -155,7 +158,9 @@ def login_view(request):
             response.status_code = 404
             return response
     else:
-        return JsonResponse(dict(message='You didn\'t use proper method please try again!'))
+        response = JsonResponse(dict(message='You are not logged in.'))
+        response.status_code = 403
+        return response
 
 
 def logout_view(request):
@@ -172,5 +177,24 @@ def logout_view(request):
     else:
         response = JsonResponse(dict(message='You didn\'t use proper method please try again!'))
         response.status_code = 400
+        return response
+
+
+@login_required(login_url='accounts:login_view')
+def profile_details(request):
+    if request.method == 'POST':
+        customer = request.user.customer
+        data = {
+            "id": customer.id,
+            "username": customer.user.username,
+            "first_name": customer.user.first_name,
+            "last_name": customer.user.last_name,
+            "email": customer.user.email,
+            "phone": customer.phone,
+            "address": customer.address,
+            "balance": customer.balance,
+        }
+        response = JsonResponse(data)
+        response.status_code = 200
         return response
 
