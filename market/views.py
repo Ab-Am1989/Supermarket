@@ -9,6 +9,7 @@ from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse
 from market.models import Product
 from django.http import HttpResponse
+from django.contrib.auth.decorators import login_required
 
 
 def product_insert(request):
@@ -52,7 +53,7 @@ def product_list(request):
             'name': product.name,
             'price': product.price,
             'inventory': product.inventory,
-            }
+        }
         products.append(product_details)
     data = {
         'products': products
@@ -122,3 +123,9 @@ def edit_inventory(request, product_id):
         response = JsonResponse(data)
         response.status_code = 404
         return response
+
+
+@login_required
+def show_cart(request):
+    response = JsonResponse(dict(message='You are in your shopping cart now!'))
+    return response
