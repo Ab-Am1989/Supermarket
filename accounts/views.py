@@ -158,9 +158,14 @@ def login_view(request):
             response.status_code = 404
             return response
     else:
-        response = JsonResponse(dict(message='You are not logged in.'))
-        response.status_code = 403
-        return response
+        if request.user.is_authenticated:
+            response = JsonResponse(dict(message='You are logging in right now.'))
+            response.status_code = 200
+            return response
+        else:
+            response = JsonResponse(dict(message='You are not logged in.'))
+            response.status_code = 403
+            return response
 
 
 def logout_view(request):
