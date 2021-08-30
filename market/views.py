@@ -156,3 +156,5 @@ def show_cart(request):
         }
         return JsonResponse(data)
 
+def add_item(request):
+    return JsonResponse(dict(message='add item'))

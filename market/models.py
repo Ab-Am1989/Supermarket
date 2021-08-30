@@ -1,5 +1,6 @@
 from django.contrib.auth.models import User
 from django.db import models
+from django.db.models import Q
 
 
 class Product(models.Model):
@@ -55,21 +56,20 @@ class Order(models.Model):
     total_price = models.PositiveIntegerField(default=0)
     status = models.IntegerField(choices=STATUS_CHOICES)
     rows = models.ManyToManyField('OrderRow', null=True, blank=True)
-    
+
     @staticmethod
     def initiate(customer):
-        orders_shopping = Order.objects.filter(customer=customer)
-        orders_shopping = Order.objects.filter(status=Order.STATUS_SHOPPING)
+        orders_shopping = Order.objects.get(Q(customer=customer) & Q(status=Order.STATUS_SHOPPING))
         if orders_shopping is None:
             new_order = Order.objects.create(customer=customer, status=Order.STATUS_SHOPPING)
-            new_order.save(commit=False)
+            new_order.save()
         return new_order
 
     def add_product(self, product, amount):
         product_row = Product.objects.get(pk=product.id)
         assert amount > 0, 'Number of product must be grater than 0'
         assert amount <= product_row.inventory, 'Enough number of this product does not exist'
-        new_product = OrderRow.objects.create(product=product, amount=amount, order=self)
+        new_product = OrderRow.objects.create(product=product, amount=amount, order_in=self)
         new_product.save()
         self.rows.add(new_product)
         self.total_price += new_product.amount * new_product.product.price
@@ -111,4 +111,3 @@ class Order(models.Model):
         assert self.status is self.STATUS_SUBMITTED, 'You cannot send the order that did not submitted!'
         self.status = self.STATUS_SENT
         self.save()
-

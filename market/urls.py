@@ -10,6 +10,7 @@ urlpatterns = [
     path('product/<int:product_id>/', views.product_details, name='product_details'),
     path('product/<int:product_id>/edit_inventory/', views.edit_inventory, name='edit_inventory'),
     path('shopping/cart/', views.show_cart, name='show_cart'),
+    path('shopping/cart/add_items/', views.add_item, name='add_item')
     # TODO: insert other url paths
     # path(...
     # path(...
