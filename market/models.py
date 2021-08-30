@@ -32,8 +32,8 @@ class Customer(models.Model):
 
 
 class OrderRow(models.Model):
-    product = models.OneToOneField('Product', on_delete=models.CASCADE)
-    order_in = models.OneToOneField('Order', on_delete=models.CASCADE)
+    product = models.ForeignKey('Product', on_delete=models.CASCADE)
+    order_in = models.ForeignKey('Order', on_delete=models.CASCADE)
     amount = models.PositiveIntegerField()
 
 
@@ -54,7 +54,7 @@ class Order(models.Model):
     order_time = models.DateTimeField(auto_now_add=True)
     total_price = models.PositiveIntegerField(default=0)
     status = models.IntegerField(choices=STATUS_CHOICES)
-    rows = models.ManyToManyField('OrderRow')
+    rows = models.ManyToManyField('OrderRow', null=True, blank=True)
     
     @staticmethod
     def initiate(customer):

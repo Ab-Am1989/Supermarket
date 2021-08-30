@@ -7,9 +7,10 @@
 """
 from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse
-from market.models import Product
+from market.models import Product, Order, OrderRow, Customer
 from django.http import HttpResponse
 from django.contrib.auth.decorators import login_required
+from django.db.models import Q
 
 
 def product_insert(request):
@@ -125,7 +126,33 @@ def edit_inventory(request, product_id):
         return response
 
 
-@login_required
+@login_required(login_url='accounts:login_view')
 def show_cart(request):
-    response = JsonResponse(dict(message='You are in your shopping cart now!'))
-    return response
+    try:
+        items = list()
+        customer = request.user.customer
+        customer_orders = Order.objects.get(Q(customer=customer) & Q(status=Order.STATUS_SHOPPING))
+        order_rows = customer_orders.rows.all()
+        for order in order_rows:
+            order_specifications = {
+                'code': order.product.id,
+                'name': order.product.name,
+                'price': order.product.price,
+                'amount': order.amount,
+            }
+            items.append(order_specifications)
+
+        data = {
+            'total_price': customer_orders.total_price,
+            'items': items,
+        }
+        response = JsonResponse(data)
+        response.status_code = 200
+        return response
+    except Order.DoesNotExist :
+        data = {
+            'total_price': 0,
+            'items': items,
+        }
+        return JsonResponse(data)
+
