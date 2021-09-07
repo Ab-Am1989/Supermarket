@@ -5,12 +5,13 @@
 
     DO NOT FORGET to complete url patterns in market/urls.py
 """
-from django.shortcuts import render, get_object_or_404
-from django.http import JsonResponse
-from market.models import Product, Order, OrderRow, Customer
-from django.http import HttpResponse
+import json
+from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
+from django.http import JsonResponse, HttpResponseRedirect
+from market.models import Order, OrderRow, Customer, Product
+from market.models import Product, Order
 
 
 def product_insert(request):
@@ -135,7 +136,7 @@ def show_cart(request):
         order_rows = customer_orders.rows.all()
         for order in order_rows:
             order_specifications = {
-                'code': order.product.id,
+                'code': order.product.code,
                 'name': order.product.name,
                 'price': order.product.price,
                 'amount': order.amount,
@@ -149,12 +150,68 @@ def show_cart(request):
         response = JsonResponse(data)
         response.status_code = 200
         return response
-    except Order.DoesNotExist :
+    except Order.DoesNotExist:
         data = {
             'total_price': 0,
             'items': items,
         }
         return JsonResponse(data)
 
+
+@login_required(login_url='accounts:login_view')
 def add_item(request):
-    return JsonResponse(dict(message='add item'))
+    if request.method == 'POST':
+        received_json_data = json.loads(request.body)
+        items = list()
+        errors = list()
+        data = dict()
+        for i in range(len(received_json_data)):
+            try:
+                code = received_json_data[i]['code']
+                amount = received_json_data[i]['amount']
+                customer = request.user.customer
+                product = Product.objects.get(code=code)
+                shopping_order = Order.objects.get(Q(customer=customer) & Q(status=Order.STATUS_SHOPPING))
+                shopping_order.add_product(product=product, amount=int(amount))
+                shopping_order_row = shopping_order.rows.get(product=product)
+                successful_add = {
+                    'code': shopping_order_row.product.code,
+                    'name': shopping_order_row.product.name,
+                    'price': shopping_order_row.product.price,
+                    'amount': shopping_order_row.amount,
+                }
+                items.append(successful_add)
+            except Order.DoesNotExist:
+                new_order = Order.initiate(customer)
+                new_order.add_product(product=product, amount=int(amount))
+                new_order.save()
+                new_order_row = new_order.rows.get(product=product)
+                successful_add = {
+                    'code': new_order_row.product.code,
+                    'name': new_order_row.product.name,
+                    'price': new_order_row.product.price,
+                    'amount': new_order_row.amount,
+                }
+                items.append(successful_add)
+            except (AssertionError, Product.DoesNotExist, ValueError) as e:
+                errors.append({
+                    'code': code,
+                    'message': str(e),
+                })
+
+        if errors:
+            data = {
+                'errors': errors,
+                'items': items,
+            }
+            response = JsonResponse(data)
+            response.status_code = 400
+            return response
+        else:
+
+            return HttpResponseRedirect(reverse('market:show_cart'))
+
+    else:
+        response = JsonResponse(dict(message='Please retry with correct method'))
+        response.status_code = 400
+        return response

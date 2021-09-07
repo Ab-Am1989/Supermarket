@@ -59,21 +59,31 @@ class Order(models.Model):
 
     @staticmethod
     def initiate(customer):
-        orders_shopping = Order.objects.get(Q(customer=customer) & Q(status=Order.STATUS_SHOPPING))
-        if orders_shopping is None:
+        try:
+            orders_shopping = Order.objects.get(Q(customer=customer) & Q(status=Order.STATUS_SHOPPING))
+            return orders_shopping
+        except Order.DoesNotExist:
             new_order = Order.objects.create(customer=customer, status=Order.STATUS_SHOPPING)
             new_order.save()
-        return new_order
+            return new_order
 
     def add_product(self, product, amount):
-        product_row = Product.objects.get(pk=product.id)
-        assert amount > 0, 'Number of product must be grater than 0'
-        assert amount <= product_row.inventory, 'Enough number of this product does not exist'
-        new_product = OrderRow.objects.create(product=product, amount=amount, order_in=self)
-        new_product.save()
-        self.rows.add(new_product)
-        self.total_price += new_product.amount * new_product.product.price
-        self.save()
+        try:
+            product_row = Product.objects.get(pk=product.id)
+            order_row = self.rows.get(product=product_row)
+            assert amount > 0, 'Number of product must be grater than 0'
+            assert amount <= product_row.inventory, 'Enough number of this product does not exist'
+            order_row.amount = amount + order_row.amount
+            self.total_price += product_row.price * amount
+            order_row.save()
+            self.save()
+        except OrderRow.DoesNotExist:
+            assert amount <= product_row.inventory, 'Enough number of this product does not exist'
+            new_product = OrderRow.objects.create(product=product, amount=amount, order_in=self)
+            new_product.save()
+            self.rows.add(new_product)
+            self.total_price += new_product.amount * new_product.product.price
+            self.save()
 
     def remove_product(self, product, amount=None):
         product = OrderRow.objects.filter(product=product)
